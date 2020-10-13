@@ -1,0 +1,84 @@
+*** Settings ***
+Library    Selenium2Library
+Library    Collections
+
+*** Variables ***
+${browser}    chrome
+${url}    https://www.officemate.co.th/
+${expected_result}    canon calculator
+${xpath_iframe_promotion}    //iframe[@classname="sp-fancybox-iframe sp-fancybox-skin sp-fancybox-iframe-535"]
+${xpath_button_IframeClose}    //i[@id="icon-close-button-1454703945249"]
+${xpath_input_MainSearchbox}    //input[@Class="_5vxBY _32CNv _2MLml"]
+${xpath_button_MainSeachbutton}    //div[@id="btn-searchResultPage"]
+${xpath_button_Sortbutton}    //div[@class="_3pSVv F0sHG _19-Sz F0sHG _1eAL0"]//div[@class="_13F3t _2cV8K x1C8Q MGtP6"]
+${xpath_button_Sortlowesttohigh}    //div[@class="_3pSVv F0sHG _19-Sz F0sHG _1eAL0"]//div[@class="_13F3t _2cV8K x1C8Q MGtP6 Uh6-P"]//..//div[@id="price_asc"]
+${xpath_text_ProductName}    //h3[@class="_2_UpO"]/a
+${xpath_text_ProductID}    //div[@class="POZxw"]
+${xpath_text_cartproduct}    //div[@Class="_269qX _1TSBW I2ppM"]//a
+${xpath_button_cart}    //div[@data-testid="btn-MiniCart"]
+${xpath_button_gotocart}    //div[@class="_3yhJv HPJ8v _1V0ys"]
+${list_result}
+${result}
+${temp_result}
+${List_Cartproduct}
+${count}
+${Number_Product}    2
+
+*** Keywords ***
+Open Officemate Browser
+    Open Browser     ${url}     ${browser}
+    Maximize Browser Window
+    Sleep    5
+Search from keywords
+    Select Frame     ${xpath_iframe_promotion}
+    Click Element    ${xpath_button_IframeClose}
+    Input Text    ${xpath_input_MainSearchbox}    ${expected_result}
+    Click Element    ${xpath_button_MainSeachbutton}
+Select lowest price to Cart
+    Wait Until Page Contains    ${expected_result}
+    Wait Until Element Is Visible    ${xpath_button_Sortbutton}    
+    Click Element    ${xpath_button_Sortbutton}
+    Wait Until Element Is Visible    ${xpath_button_Sortlowesttohigh}
+    Click Element    ${xpath_button_Sortlowesttohigh}
+Add to Cart
+    [Arguments]    ${count}
+	Log    ${count}
+        Wait Until Element Is Visible    (${xpath_text_ProductName})[${count}+1]
+        ${result}    Get Text    (${xpath_text_ProductName})[${count}+1]
+        ${temp_result}    Get Text    (${xpath_text_ProductID})[${count}+1]
+	Wait Until Element Is Enabled    //div[@id="btn-addCart-${temp_result}"]
+        Click Element    //div[@id="btn-addCart-${temp_result}"]
+        Log    ${result}
+        Sleep    5
+    [return]    ${result}
+Go to Cart Page
+    Click Element     ${xpath_button_cart}
+    Wait Until Element Is Visible    ${xpath_button_gotocart}
+    Sleep    3
+    Click Element     ${xpath_button_gotocart}
+Get Data From Cart Page
+    [Arguments]    ${count}
+        Wait Until Element Is Visible    (${xpath_text_cartproduct})[${count}+1]
+        ${result}    Get Element Attribute    (${xpath_text_cartproduct})[${count}+1]    attribute=title               	
+    [return]    ${result}
+
+*** Test Cases ***
+Search case
+    Open Officemate Browser
+    Search from keywords
+    Select lowest price to Cart
+    ${list_result}    Create List
+    FOR    ${count}    IN RANGE    ${Number_Product}
+        ${result}    Add to Cart    ${count}
+        Append To List    ${list_result}    ${result}
+    END
+    Log    ${list_result}[0]
+    Go to Cart Page
+    ${List_Cartproduct}    Create List
+    FOR    ${count}    IN RANGE    ${Number_Product}
+        ${result}    Get Data From Cart Page    ${count}
+        List Should Contain Value    ${list_result}    ${result}        
+    END   
+
+
+
